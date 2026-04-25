@@ -1,0 +1,26 @@
+---
+# tasks file for roles/webserver
+- name: Install Apache and PHP packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  loop: "{{ apache_packages }}"
+  notify: Restart Apache
+
+- name: Start Apache service
+  ansible.builtin.command:
+    cmd: service apache2 start
+
+- name: Deploy PHP application
+  ansible.builtin.template:
+    src: index.php.j2
+    dest: /var/www/html/index.php
+    mode: '0644'
+
+- name: Set index.php as default page
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/mods-enabled/dir.conf
+    regexp: 'DirectoryIndex'
+    line: 'DirectoryIndex index.php index.html index.cgi index.pl index.xhtml index.htm'
+  notify: Restart Apache

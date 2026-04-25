@@ -1,0 +1,13 @@
+---
+# vars file for roles/webserver
+apache_packages:
+  - apache2
+  - php
+  - php-mysql
+  - php-curl
+  - php-mbstring
+
+db_host: database
+db_name: app_db
+db_user: app_user
+db_password: app-password

@@ -1,0 +1,5 @@
+---
+# handlers file for roles/database
+- name: Restart MySQL
+  ansible.builtin.command:
+    cmd: service mysql restart

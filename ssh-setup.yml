@@ -1,0 +1,31 @@
+---
+- name: Setup SSH Keys
+  hosts: all
+  become: true
+  become_method: sudo
+
+  tasks:
+
+    - name: Generate SSH key on control node
+      ansible.builtin.openssh_keypair:
+        path: /home/ansible/.ssh/id_rsa
+        type: rsa
+        size: 4096
+        force: false
+      delegate_to: localhost
+      run_once: true
+
+    - name: Set correct permissions on private key
+      ansible.builtin.file:
+        path: /home/ansible/.ssh/id_rsa
+        mode: '0600'
+        owner: ansible
+        group: ansible
+      delegate_to: localhost
+      run_once: true
+
+    - name: Copy public key to managed nodes
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"

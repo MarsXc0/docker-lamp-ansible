@@ -1,0 +1,142 @@
+<?php
+$host     = "{{ db_host }}";
+$dbname   = "{{ db_name }}";
+$username = "{{ db_user }}";
+$password = "{{ db_password }}";
+
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Create table if not exists
+    $conn->exec("CREATE TABLE IF NOT EXISTS todos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        status ENUM('pending','done') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    // Add new todo
+    if (isset($_POST['add'])) {
+        $stmt = $conn->prepare("INSERT INTO todos (title) VALUES (:title)");
+        $stmt->execute([':title' => $_POST['title']]);
+    }
+
+    // Mark as done
+    if (isset($_POST['done'])) {
+        $stmt = $conn->prepare("UPDATE todos SET status='done' WHERE id=:id");
+        $stmt->execute([':id' => $_POST['id']]);
+    }
+
+    // Delete todo
+    if (isset($_POST['delete'])) {
+        $stmt = $conn->prepare("DELETE FROM todos WHERE id=:id");
+        $stmt->execute([':id' => $_POST['id']]);
+    }
+
+    // Get all todos
+    $todos = $conn->query("SELECT * FROM todos ORDER BY created_at DESC")->fetchAll();
+
+} catch(PDOException $e) {
+    die("<h2>Connection Failed: " . $e->getMessage() . "</h2>");
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo List - LAMP Ansible</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial; background: #f0f2f5; min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .add-form { background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 10px; }
+        .add-form input { flex: 1; padding: 12px; border: 2px solid #ddd; 
+                          border-radius: 8px; font-size: 16px; outline: none; }
+        .add-form input:focus { border-color: #4CAF50; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-add { background: #4CAF50; color: white; }
+        .btn-done { background: #2196F3; color: white; }
+        .btn-delete { background: #f44336; color: white; }
+        .todo-item { background: white; padding: 15px 20px; border-radius: 10px;
+                     box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 10px;
+                     display: flex; align-items: center; gap: 10px; }
+        .todo-item.done { opacity: 0.6; }
+        .todo-title { flex: 1; font-size: 16px; color: #333; }
+        .todo-title.done { text-decoration: line-through; color: #999; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-done { background: #d4edda; color: #155724; }
+        .empty { text-align: center; color: #999; padding: 40px; background: white;
+                 border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat { flex: 1; background: white; padding: 15px; border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; color: #4CAF50; }
+        .stat-label { font-size: 12px; color: #999; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📝 Todo List</h1>
+
+    <!-- Stats -->
+    <?php
+        $total   = count($todos);
+        $done    = count(array_filter($todos, fn($t) => $t['status'] == 'done'));
+        $pending = $total - $done;
+    ?>
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-number"><?= $total ?></div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" style="color:#2196F3"><?= $pending ?></div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" style="color:#4CAF50"><?= $done ?></div>
+            <div class="stat-label">Done</div>
+        </div>
+    </div>
+
+    <!-- Add Todo Form -->
+    <form method="POST" class="add-form">
+        <input type="text" name="title" placeholder="Add a new todo..." required>
+        <button type="submit" name="add" class="btn btn-add">➕ Add</button>
+    </form>
+
+    <!-- Todo List -->
+    <?php if (empty($todos)): ?>
+        <div class="empty">
+            <h3>No todos yet!</h3>
+            <p>Add your first todo above 👆</p>
+        </div>
+    <?php else: ?>
+        <?php foreach ($todos as $todo): ?>
+        <div class="todo-item <?= $todo['status'] == 'done' ? 'done' : '' ?>">
+            <span class="todo-title <?= $todo['status'] == 'done' ? 'done' : '' ?>">
+                <?= htmlspecialchars($todo['title']) ?>
+            </span>
+            <span class="badge <?= $todo['status'] == 'done' ? 'badge-done' : 'badge-pending' ?>">
+                <?= $todo['status'] ?>
+            </span>
+            <?php if ($todo['status'] == 'pending'): ?>
+            <form method="POST">
+                <input type="hidden" name="id" value="<?= $todo['id'] ?>">
+                <button type="submit" name="done" class="btn btn-done">✅ Done</button>
+            </form>
+            <?php endif; ?>
+            <form method="POST">
+                <input type="hidden" name="id" value="<?= $todo['id'] ?>">
+                <button type="submit" name="delete" class="btn btn-delete">🗑️ Delete</button>
+            </form>
+        </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</div>
+</body>
+</html>

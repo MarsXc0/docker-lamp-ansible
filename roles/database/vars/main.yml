@@ -1,0 +1,10 @@
+---
+# vars file for roles/database
+db_packages:
+  - mysql-server
+  - python3-mysqldb
+
+db_name: app_db
+db_user: app_user
+db_password: app-password
+db_root_password: rootpassword

@@ -1,0 +1,14 @@
+---
+- name: Configure Web Server
+  hosts: webservers
+  become: true
+  become_method: sudo
+  roles:
+    - webserver
+
+- name: Configure Database Server
+  hosts: dbservers
+  become: true
+  become_method: sudo
+  roles:
+    - database
