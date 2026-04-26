@@ -149,7 +149,6 @@ services:
     networks:
       - lamp-network
     ports:
-      - "3306:3306"
       - "2233:22"
     stdin_open: true
     tty: true
@@ -166,7 +165,6 @@ services:
 | `stdin_open: true` | Keep keyboard connected (like -i flag) |
 | `tty: true` | Keep screen connected (like -t flag) |
 | `8080:80` | Your machine port 8080 maps to container port 80 |
-| `3306:3306` | Your machine port 3306 maps to container port 3306 |
 | `2222:22` | Your machine port 2222 maps to container SSH port 22 |
 | `2233:22` | Your machine port 2233 maps to db container SSH port 22 |
  
@@ -176,8 +174,7 @@ services:
 YOUR MACHINE                    CONTAINERS
 localhost:8080  →→→→→→→→→→→   ansible-web  (Apache)
 localhost:2222  →→→→→→→→→→→   ansible-web  (SSH)
-localhost:3306  →→→→→→→→→→→   ansible-db   (MySQL)
-localhost:2233  →→→→→→→→→→→   ansible-db   (SSH)
+localhost:2233  →→→→→→→→→→→   ansible-db   (SSH only - no direct MySQL access!)
 ```
  
 > Note: Inside Docker network, containers talk directly using real ports (22, 3306) by container name - no port mapping needed!
