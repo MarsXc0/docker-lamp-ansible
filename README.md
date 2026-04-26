@@ -5,14 +5,13 @@
 ```
 Local Machine (Browser)
         │
-        ├── localhost:8080 ──► Web Container (Apache + PHP)
-        │                              │
-        │                              └── connects to ──► DB Container (MySQL)
-        │
-        └── localhost:3306 ──► DB Container (MySQL)
+        └── localhost:8080 ──► Web Container (Apache + PHP)
+                                       │
+                                       └── connects to ──► DB Container (MySQL)
  
 All containers on Docker network: lamp-network
 ```
+
  
 ---
  
